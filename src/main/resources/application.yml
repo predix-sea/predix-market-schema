@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: predix-market-schema
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        format_sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:predix_market}
+    username: ${DB_USER:predix}
+    password: ${DB_PASSWORD:predix}
+    driver-class-name: org.postgresql.Driver
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+    include-binding-errors: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+springdoc:
+  api-docs:
+    path: /api/openapi/v3/api-docs
+  swagger-ui:
+    path: /api/openapi/swagger-ui.html
+
+predix:
+  market-code-prefix: PMKT
+
+logging:
+  level:
+    root: INFO
+    com.predix.marketschema: INFO
