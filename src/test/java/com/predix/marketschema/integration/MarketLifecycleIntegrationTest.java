@@ -63,7 +63,7 @@ class MarketLifecycleIntegrationTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"outcomeCode":"YES","outcomeLabel":"Yes"}
-                                """)
+                                """))
                 .andExpect(status().isCreated())
                 .andReturn();
 

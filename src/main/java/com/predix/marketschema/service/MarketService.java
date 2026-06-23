@@ -131,17 +131,17 @@ public class MarketService {
             List<MarketOutcomeEntity> outcomes = outcomeRepository.findByMarketIdOrderByOutcomeIndexAsc(id);
             validationService.validateOutcomesForOpen(market, outcomes);
             validationService.validateTimeWindow(market.getOpenTime(), market.getCloseTime(), market.getResolveDeadline());
-        });
+        }, null);
     }
 
     @Transactional
     public MarketResponse closeMarket(UUID id, String actor) {
-        return transition(id, MarketStatus.CLOSED, "CLOSE", actor, null);
+        return transition(id, MarketStatus.CLOSED, "CLOSE", actor, null, null);
     }
 
     @Transactional
     public MarketResponse startResolving(UUID id, String actor) {
-        return transition(id, MarketStatus.RESOLVING, "START_RESOLVING", actor, null);
+        return transition(id, MarketStatus.RESOLVING, "START_RESOLVING", actor, null, null);
     }
 
     @Transactional
@@ -186,7 +186,7 @@ public class MarketService {
         MarketEntity market = findMarketOrThrow(id);
         List<MarketOutcomeEntity> outcomes = outcomeRepository.findByMarketIdOrderByOutcomeIndexAsc(id);
         validationService.validateSingleWinningOutcome(outcomes);
-        return transition(id, MarketStatus.SETTLED, "SETTLE", actor, null);
+        return transition(id, MarketStatus.SETTLED, "SETTLE", actor, null, null);
     }
 
     @Transactional
@@ -202,7 +202,7 @@ public class MarketService {
                     ErrorCode.MARKET_RULE_VIOLATION,
                     "Cannot cancel OPEN market after open_time without force=true");
         }
-        return transition(id, MarketStatus.CANCELLED, "CANCEL", request.getActor(), request.getReason());
+        return transition(id, MarketStatus.CANCELLED, "CANCEL", request.getActor(), null, request.getReason());
     }
 
     public MarketEntity findMarketOrThrow(UUID id) {
@@ -210,7 +210,8 @@ public class MarketService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Market not found: " + id));
     }
 
-    private MarketResponse transition(UUID id, MarketStatus to, String action, String actor, Runnable preCheck) {
+    private MarketResponse transition(
+            UUID id, MarketStatus to, String action, String actor, Runnable preCheck, String auditDetail) {
         MarketEntity market = findMarketOrThrow(id);
         MarketStatus from = market.getStatus();
         stateMachine.validateTransition(from, to);
@@ -219,7 +220,7 @@ public class MarketService {
         }
         market.setStatus(to);
         MarketEntity saved = marketRepository.save(market);
-        auditService.logTransition(id, from, to, action, actor != null ? actor : "system", null);
+        auditService.logTransition(id, from, to, action, actor != null ? actor : "system", auditDetail);
         return mapper.toMarketResponse(saved);
     }
 }
